@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Paid Push Editable Table</title>
+
+  <!-- Google Font: Comic Neue -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&display=swap"
+    rel="stylesheet"
+  />
+
+  <style>
+    body {
+      background: #121212;
+      color: #f0f0f0;
+      font-family: "Comic Neue", cursive, Arial, sans-serif;
+      padding: 20px;
+      max-width: 900px;
+      margin: auto;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 25px;
+      font-size: 2.5rem;
+      text-shadow: 0 0 10px #64ffda;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      box-shadow: 0 0 20px #64ffda88;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    th,
+    td {
+      border: 1px solid #64ffda;
+      padding: 12px 15px;
+      text-align: center;
+      font-size: 1.25rem;
+    }
+    th {
+      background: #004d40;
+      color: #a7ffeb;
+      font-weight: 700;
+    }
+    input[type="text"],
+    input[type="number"] {
+      width: 90%;
+      padding: 6px 8px;
+      font-size: 1.1rem;
+      background: #263238;
+      color: #a7ffeb;
+      border: 1px solid #64ffda;
+      border-radius: 4px;
+      font-weight: 700;
+      text-align: center;
+    }
+    input[type="text"] {
+      text-align: left;
+      padding-left: 10px;
+    }
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    button {
+      cursor: pointer;
+      padding: 6px 12px;
+      margin: 0 5px;
+      font-weight: 700;
+      font-size: 1.25rem;
+      border-radius: 6px;
+      border: none;
+      transition: background-color 0.3s ease;
+      user-select: none;
+    }
+    button:focus {
+      outline: 2px solid #64ffda;
+      outline-offset: 2px;
+    }
+    button.plus {
+      background-color: #00c853;
+      color: white;
+    }
+    button.plus:hover {
+      background-color: #00e676;
+    }
+    button.minus {
+      background-color: #d50000;
+      color: white;
+    }
+    button.minus:hover {
+      background-color: #ff1744;
+    }
+    button.delete {
+      background-color: #ff6f00;
+      color: white;
+    }
+    button.delete:hover {
+      background-color: #ff9100;
+    }
+    #add-row-btn {
+      display: block;
+      margin: 25px auto 0;
+      background-color: #2979ff;
+      color: white;
+      font-size: 1.5rem;
+      padding: 10px 20px;
+      border-radius: 8px;
+      border: none;
+      font-weight: 800;
+      user-select: none;
+      box-shadow: 0 0 15px #2979ffaa;
+      transition: background-color 0.3s ease;
+    }
+    #add-row-btn:hover {
+      background-color: #448aff;
+      box-shadow: 0 0 25px #448affcc;
+    }
+  </style>
+</head>
+<body>
+  <h1>Paid Push Editable Table</h1>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 8%">No.</th>
+        <th style="width: 55%; text-align: left; padding-left: 15px">
+          Player Name
+        </th>
+        <th style="width: 12%">Stars</th>
+        <th style="width: 25%">Actions</th>
+      </tr>
+    </thead>
+    <tbody id="table-body"></tbody>
+  </table>
+
+  <button id="add-row-btn">➕ Add New Player</button>
+
+  <!-- Firebase SDKs -->
+  <script type="module">
+    // Import Firebase SDK modules
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
+    import {
+      getDatabase,
+      ref,
+      set,
+      push,
+      onValue,
+      remove,
+      update,
+    } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-database.js";
+
+    // Your Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyChO1aC8iQLW7BbMHzEU0mJqGexo2kj0hE",
+      authDomain: "red-paid-push-data.firebaseapp.com",
+      projectId: "red-paid-push-data",
+      storageBucket: "red-paid-push-data.firebasestorage.app",
+      messagingSenderId: "87626213146",
+      appId: "1:87626213146:web:dd1c8575ccdaf33454aea3",
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+
+    const tableBody = document.getElementById("table-body");
+    const addRowBtn = document.getElementById("add-row-btn");
+
+    // Listen for data changes in Firebase "players" node
+    onValue(ref(database, "players"), (snapshot) => {
+      const data = snapshot.val() || {};
+      renderTable(data);
+    });
+
+    // Render the entire table from database data
+    function renderTable(data) {
+      tableBody.innerHTML = ""; // Clear existing rows
+      const keys = Object.keys(data);
+      keys.forEach((key, index) => {
+        const player = data[key];
+        const tr = document.createElement("tr");
+
+        // No. cell
+        const noTd = document.createElement("td");
+        noTd.textContent = index + 1;
+        tr.appendChild(noTd);
+
+        // Player Name cell (editable)
+        const nameTd = document.createElement("td");
+        nameTd.style.textAlign = "left";
+        nameTd.style.paddingLeft = "15px";
+        const nameInput = document.createElement("input");
+        nameInput.type = "text";
+        nameInput.value = player.name || "";
+        nameInput.addEventListener("change", () => {
+          update(ref(database, `players/${key}`), { name: nameInput.value });
+        });
+        nameTd.appendChild(nameInput);
+        tr.appendChild(nameTd);
+
+        // Stars cell (editable number)
+        const starsTd = document.createElement("td");
+        const starsInput = document.createElement("input");
+        starsInput.type = "number";
+        starsInput.min = 0;
+        starsInput.value = player.stars || 0;
+        starsInput.addEventListener("change", () => {
+          let val = parseInt(starsInput.value);
+          if (isNaN(val) || val < 0) val = 0;
+          starsInput.value = val;
+          update(ref(database, `players/${key}`), { stars: val });
+        });
+        starsTd.appendChild(starsInput);
+        tr.appendChild(starsTd);
+
+        // Actions cell (plus, minus, delete buttons)
+        const actionTd = document.createElement("td");
+
+        // Plus button ➕
+        const plusBtn = document.createElement("button");
+        plusBtn.className = "plus";
+        plusBtn.textContent = "➕";
+        plusBtn.title = "Increase Stars";
+        plusBtn.addEventListener("click", () => {
+          let val = parseInt(starsInput.value) || 0;
+          val++;
+          starsInput.value = val;
+          update(ref(database, `players/${key}`), { stars: val });
+        });
+        actionTd.appendChild(plusBtn);
+
+        // Minus button ➖
+        const minusBtn = document.createElement("button");
+        minusBtn.className = "minus";
+        minusBtn.textContent = "➖";
+        minusBtn.title = "Decrease Stars";
+        minusBtn.addEventListener("click", () => {
+          let val = parseInt(starsInput.value) || 0;
+          if (val > 0) val--;
+          starsInput.value = val;
+          update(ref(database, `players/${key}`), { stars: val });
+        });
+        actionTd.appendChild(minusBtn);
+
+        // Delete button 🗑️
+        const deleteBtn = document.createElement("button");
+        deleteBtn.className = "delete";
+        deleteBtn.textContent = "🗑️";
+        deleteBtn.title = "Delete Player";
+        deleteBtn.addEventListener("click", () => {
+          if (confirm(`Delete player "${player.name}"?`)) {
+            remove(ref(database, `players/${key}`));
+          }
+        });
+        actionTd.appendChild(deleteBtn);
+
+        tr.appendChild(actionTd);
+
+        tableBody.appendChild(tr);
+      });
+    }
+
+    // Add new player row on button click
+    addRowBtn.addEventListener("click", () => {
+      // Push new player to Firebase with default values
+      const newPlayerRef = push(ref(database, "players"));
+      set(newPlayerRef, {
+        name: "New Player",
+        stars: 0,
+      });
+    });
+  </script>
+</body>
+</html>
