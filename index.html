@@ -1,272 +1,422 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Paid Push Editable Table</title>
-  <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&display=swap" rel="stylesheet" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Paid Push — Neon Player Table</title>
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+
   <style>
-    body {
-      background: #121212;
-      color: #f0f0f0;
-      font-family: "Comic Neue", cursive, Arial, sans-serif;
-      padding: 20px;
-      max-width: 1000px;
-      margin: auto;
+    :root{
+      --bg:#071011;
+      --panel:#071717;
+      --teal:#0fd7c7;
+      --muted:#0a2b2a;
+      --card:#0b1414;
+      --text:#dffbf7;
+      --accent:#12e6d3;
+      --shadow: 0 0 18px rgba(17,220,200,0.06);
     }
-    h1 {
-      text-align: center;
-      margin-bottom: 15px;
-      font-size: 2.5rem;
-      text-shadow: 0 0 10px #64ffda;
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      min-height:100vh;
+      background:
+        radial-gradient(1000px 400px at 10% 10%, rgba(17,220,200,0.03), transparent 8%),
+        linear-gradient(180deg, #081213 0%, #021212 100%);
+      color:var(--text);
+      font-family:'Poppins',system-ui,Segoe UI,Arial;
+      -webkit-font-smoothing:antialiased;
+      padding:28px;
+      display:flex;
+      justify-content:center;
     }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      box-shadow: 0 0 20px #64ffda88;
-      border-radius: 8px;
-      overflow: hidden;
+
+    .wrap{
+      width:100%;
+      max-width:1060px;
+      border-radius:14px;
+      padding:22px;
+      background:linear-gradient(180deg, rgba(0,0,0,0.25), rgba(0,0,0,0.18));
+      box-shadow: 0 8px 40px rgba(0,0,0,0.6), inset 0 0 40px rgba(15,215,190,0.02);
+      border: 1px solid rgba(15,215,190,0.08);
     }
-    th, td {
-      border: 1px solid #64ffda;
-      padding: 8px;
-      text-align: center;
-      font-size: 1.1rem;
+
+    header{
+      text-align:center;
+      margin-bottom:14px;
     }
-    th {
-      background: #004d40;
-      color: #a7ffeb;
-      font-weight: 700;
+
+    h1{
+      font-family:'Orbitron', sans-serif;
+      font-weight:700;
+      letter-spacing:1px;
+      color:var(--teal);
+      font-size:34px;
+      text-shadow:
+        0 0 14px rgba(15,215,190,0.14),
+        0 0 6px rgba(0,0,0,0.6);
+      margin:0 0 12px 0;
     }
-    input[type="text"], input[type="number"], input[type="color"] {
-      width: 90%;
-      padding: 4px;
-      font-size: 1rem;
-      background: #263238;
-      color: #a7ffeb;
-      border: 1px solid #64ffda;
-      border-radius: 4px;
-      text-align: center;
+
+    .search-row{
+      display:flex;
+      gap:12px;
+      margin-bottom:14px;
     }
-    input[type="text"] { text-align: left; padding-left: 6px; }
-    button {
-      cursor: pointer;
-      padding: 5px 8px;
-      font-weight: 700;
-      font-size: 1rem;
-      border-radius: 6px;
-      border: none;
-      transition: background-color 0.3s ease;
-      user-select: none;
+
+    .search-row input{
+      flex:1;
+      background:transparent;
+      border:1px solid rgba(15,215,190,0.12);
+      padding:10px 12px;
+      border-radius:8px;
+      color:var(--text);
+      outline:none;
+      box-shadow: inset 0 -2px 0 rgba(0,0,0,0.35);
+      font-weight:600;
     }
-    button.plus { background-color: #00c853; color: white; }
-    button.plus:hover { background-color: #00e676; }
-    button.minus { background-color: #d50000; color: white; }
-    button.minus:hover { background-color: #ff1744; }
-    button.delete { background-color: #ff6f00; color: white; }
-    button.delete:hover { background-color: #ff9100; }
-    #add-row-btn {
-      display: block;
-      margin: 15px auto;
-      background-color: #2979ff;
-      color: white;
-      font-size: 1.2rem;
-      padding: 8px 15px;
-      border-radius: 8px;
-      font-weight: 800;
-      box-shadow: 0 0 15px #2979ffaa;
+    .search-row input::placeholder{ color:rgba(160,240,230,0.2); font-weight:500; }
+
+    /* table container */
+    .table-wrap{
+      overflow:auto;
+      border-top:2px solid rgba(15,215,190,0.06);
+      border-radius:10px;
+      padding:12px;
+      background: linear-gradient(180deg, rgba(0,0,0,0.28), rgba(0,0,0,0.22));
+      box-shadow: 0 6px 20px rgba(10,30,30,0.6);
     }
-    #add-row-btn:hover { background-color: #448aff; }
-    .view-mode input, .view-mode button, .view-mode select { pointer-events: none; opacity: 0.6; }
-    .search-row input { width: 95%; padding: 4px; font-size: 1rem; background: #1e272c; color: #a7ffeb; border: 1px solid #64ffda; border-radius: 4px; }
-    .global-actions { margin-bottom: 10px; text-align: right; }
-    .global-actions button { margin-left: 5px; }
+
+    table{
+      width:100%;
+      border-collapse:collapse;
+      min-width:880px;
+    }
+
+    thead th{
+      text-align:left;
+      padding:14px 12px;
+      border-bottom:1px solid rgba(15,215,190,0.06);
+      color: rgba(180,255,246,0.95);
+      font-weight:700;
+      background: linear-gradient(90deg, rgba(3,30,30,0.2), rgba(3,30,30,0.12));
+      font-size:14px;
+      position:sticky;
+      top:0;
+      z-index:2;
+    }
+
+    tbody tr{
+      background: linear-gradient(180deg, rgba(0,0,0,0.18), rgba(0,0,0,0.12));
+      border-radius:6px;
+      margin-bottom:8px;
+      box-shadow: 0 2px 0 rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.01);
+    }
+
+    tbody td{
+      padding:12px;
+      vertical-align:middle;
+      border-bottom:1px solid rgba(15,215,190,0.03);
+      color: #bfeee6;
+      font-weight:600;
+      font-size:14px;
+    }
+
+    /* Serial column */
+    .serial{
+      width:64px;
+      text-align:center;
+      color:#9bded6;
+      font-weight:700;
+    }
+
+    /* Inputs style */
+    .name-input, .stars-input{
+      width:100%;
+      padding:8px 10px;
+      border-radius:8px;
+      border:1px solid rgba(15,215,190,0.08);
+      background: rgba(2,10,10,0.35);
+      color:var(--text);
+      outline:none;
+      box-shadow: 0 0 8px rgba(15,215,190,0.02) inset;
+      font-weight:700;
+      letter-spacing:0.6px;
+    }
+
+    .name-input { padding-left:12px; }
+
+    .stars-input { text-align:center; width:120px; }
+
+    /* tiny color box */
+    .color-cell {
+      text-align:center;
+      width:84px;
+    }
+
+    .color-box{
+      display:inline-block;
+      width:28px;
+      height:22px;
+      border-radius:6px;
+      border:1px solid rgba(255,255,255,0.05);
+      box-shadow: 0 0 8px rgba(15,215,190,0.07) inset;
+      vertical-align:middle;
+    }
+
+    input[type="color"]{
+      width:34px;
+      height:24px;
+      padding:0;
+      border-radius:6px;
+      border:0;
+      background:transparent;
+      cursor:pointer;
+      vertical-align:middle;
+    }
+
+    /* action buttons */
+    .actions-row{ display:flex; gap:12px; justify-content:flex-end; margin-top:12px; }
+    .btn{
+      background:transparent;
+      border:1px solid rgba(15,215,190,0.12);
+      padding:8px 12px;
+      color:var(--teal);
+      border-radius:8px;
+      font-weight:700;
+      cursor:pointer;
+      transition: all .15s;
+    }
+    .btn:hover{ transform: translateY(-2px); box-shadow: 0 8px 24px rgba(15,215,190,0.06); }
+
+    /* view-mode disables inputs */
+    .view-mode .name-input,
+    .view-mode .stars-input,
+    .view-mode input[type="color"],
+    .view-mode .btn{ pointer-events:none; opacity:0.55; }
+
+    /* responsive */
+    @media (max-width:880px){
+      .stars-input{ width:80px; }
+    }
   </style>
 </head>
 <body>
-  <h1>Paid Push Editable Table</h1>
+  <div class="wrap">
+    <header>
+      <h1>Paid Push Editable Table</h1>
+    </header>
 
-  <div class="global-actions" id="global-actions" style="display:none;">
-    <button class="plus" id="global-plus">➕ Add Star</button>
-    <button class="minus" id="global-minus">➖ Remove Star</button>
+    <div class="search-row">
+      <input id="searchSerial" placeholder="Search No." />
+      <input id="searchName" placeholder="Search Name" />
+    </div>
+
+    <div class="table-wrap" id="tableWrap">
+      <table id="playerTable" aria-label="Player table">
+        <thead>
+          <tr>
+            <th class="serial">No.</th>
+            <th>Player Name</th>
+            <th style="text-align:center">Stars</th>
+            <th style="text-align:center">Color</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="actions-row" style="margin-top:14px;">
+      <button id="addRowBtn" class="btn">➕ Add Row</button>
+      <button id="selectAllBtn" class="btn">✅ Select All</button>
+      <button id="removeSelBtn" class="btn">🗑️ Remove Selected</button>
+    </div>
   </div>
 
-  <table>
-    <thead>
-      <tr class="search-row">
-        <th><input type="text" id="search-no" placeholder="Search No."></th>
-        <th><input type="text" id="search-name" placeholder="Search Name"></th>
-        <th></th><th></th><th></th>
-      </tr>
-      <tr>
-        <th>No.</th>
-        <th>Player Name</th>
-        <th>Stars</th>
-        <th>Color</th>
-        <th class="actions-col">Actions</th>
-      </tr>
-    </thead>
-    <tbody id="table-body"></tbody>
-  </table>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+  import { getDatabase, ref, onValue, push, update, remove } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
 
-  <button id="add-row-btn">➕ Add New Player</button>
+  // ---------- FIREBASE CONFIG ----------
+  const firebaseConfig = {
+    apiKey: "AIzaSyChO1aC8iQLW7BbMHzEU0mJqGexo2kj0hE",
+    authDomain: "red-paid-push-data.firebaseapp.com",
+    databaseURL: "https://red-paid-push-data-default-rtdb.firebaseio.com",
+    projectId: "red-paid-push-data",
+    storageBucket: "red-paid-push-data.firebasestorage.app",
+    messagingSenderId: "87626213146",
+    appId: "1:87626213146:web:dd1c8575ccdaf33454aea3"
+  };
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
-    import { getDatabase, ref, set, push, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-database.js";
+  // ---------- MODE & PASSWORD ----------
+  const EDIT_PASSWORD = "mypassword"; // <<-- change this to your chosen password
+  const urlParams = new URLSearchParams(window.location.search);
+  let editMode = urlParams.get("mode") === "edit";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyChO1aC8iQLW7BbMHzEU0mJqGexo2kj0hE",
-      authDomain: "red-paid-push-data.firebaseapp.com",
-      projectId: "red-paid-push-data",
-      storageBucket: "red-paid-push-data.firebasestorage.app",
-      messagingSenderId: "87626213146",
-      appId: "1:87626213146:web:dd1c8575ccdaf33454aea3",
-      databaseURL: "https://red-paid-push-data-default-rtdb.firebaseio.com/"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const database = getDatabase(app);
-
-    const tableBody = document.getElementById("table-body");
-    const addRowBtn = document.getElementById("add-row-btn");
-    const globalActions = document.getElementById("global-actions");
-
-    const urlParams = new URLSearchParams(window.location.search);
-    let mode = urlParams.get("mode") || "view";
-
-    if (mode === "edit") {
-      const password = prompt("Enter password to edit:");
-      if (password !== "mypassword") {
-        alert("Wrong password! Switching to view-only mode.");
-        mode = "view";
-      }
+  if(editMode){
+    const p = prompt("Enter password to edit:");
+    if(p !== EDIT_PASSWORD){
+      alert("Wrong password — switched to view-only");
+      editMode = false;
+      document.body.classList.add('view-mode');
     }
+  } else {
+    document.body.classList.add('view-mode');
+  }
 
-    if (mode === "view") {
-      document.body.classList.add("view-mode");
-      document.querySelector(".actions-col").style.display = "none";
-      addRowBtn.style.display = "none";
-    } else {
-      document.body.classList.add("edit-mode");
-      globalActions.style.display = "block";
-    }
+  // ---------- DOM ----------
+  const tbody = document.querySelector("#playerTable tbody");
+  const addRowBtn = document.getElementById("addRowBtn");
+  const removeSelBtn = document.getElementById("removeSelBtn");
+  const selectAllBtn = document.getElementById("selectAllBtn");
+  const searchSerial = document.getElementById("searchSerial");
+  const searchName = document.getElementById("searchName");
 
-    let playersData = {};
-    let selectedRows = new Set();
+  // selectedIds set (checkbox selection)
+  let selected = new Set();
 
-    onValue(ref(database, "players"), (snapshot) => {
-      playersData = snapshot.val() || {};
-      renderTable();
-    });
+  // ---------- REALTIME LISTEN ----------
+  const playersRef = ref(db, "players");
+  onValue(playersRef, snap => {
+    const data = snap.val() || {};
+    renderTable(data);
+  });
 
-    function renderTable() {
-      tableBody.innerHTML = "";
-      const searchNo = document.getElementById("search-no").value.trim();
-      const searchName = document.getElementById("search-name").value.trim().toLowerCase();
+  // ---------- RENDER ----------
+  function renderTable(data){
+    tbody.innerHTML = "";
+    const entries = Object.entries(data);
+    entries.forEach(([id, item], idx) => {
+      const tr = document.createElement("tr");
 
-      Object.keys(playersData).forEach((key, idx) => {
-        const player = playersData[key];
-        const actualNo = idx + 1;
+      // Serial
+      const tdNo = document.createElement("td");
+      tdNo.className = "serial";
+      tdNo.textContent = idx+1;
+      tr.appendChild(tdNo);
 
-        if (searchNo && actualNo.toString() !== searchNo) return;
-        if (searchName && !player.name.toLowerCase().includes(searchName)) return;
-
-        const tr = document.createElement("tr");
-
-        const noTd = document.createElement("td");
-        noTd.textContent = actualNo;
-        tr.appendChild(noTd);
-
-        const nameTd = document.createElement("td");
+      // Name cell
+      const tdName = document.createElement("td");
+      if(editMode){
         const nameInput = document.createElement("input");
-        nameInput.type = "text";
-        nameInput.value = player.name || "";
-        nameInput.disabled = mode === "view";
-        nameTd.appendChild(nameInput);
-        tr.appendChild(nameTd);
+        nameInput.className = "name-input";
+        nameInput.value = item.name || "";
+        nameInput.addEventListener("input", () => {
+          update(ref(db, `players/${id}`), { name: nameInput.value });
+        });
+        // attach a small checkbox to left for selection
+        const wrapper = document.createElement("div");
+        wrapper.style.display = "flex";
+        wrapper.style.gap = "8px";
+        wrapper.style.alignItems = "center";
 
-        const starsTd = document.createElement("td");
-        const starsInput = document.createElement("input");
-        starsInput.type = "number";
-        starsInput.min = 0;
-        starsInput.value = player.stars || 0;
-        starsInput.disabled = mode === "view";
-        starsTd.appendChild(starsInput);
-        tr.appendChild(starsTd);
+        const cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.style.width = "18px";
+        cb.dataset.id = id;
+        cb.checked = selected.has(id);
+        cb.addEventListener("change", (e)=>{
+          if(e.target.checked) selected.add(id);
+          else selected.delete(id);
+        });
 
-        const colorTd = document.createElement("td");
-        const colorInput = document.createElement("input");
-        colorInput.type = "color";
-        colorInput.value = player.color || "#ffffff";
-        colorInput.disabled = mode === "view";
-        colorTd.appendChild(colorInput);
-        tr.appendChild(colorTd);
+        wrapper.appendChild(cb);
+        wrapper.appendChild(nameInput);
+        tdName.appendChild(wrapper);
+      } else {
+        tdName.textContent = item.name || "";
+        tdName.style.color = item.color || "#bfeee6";
+      }
+      tr.appendChild(tdName);
 
-        if (mode === "edit") {
-          const actionsTd = document.createElement("td");
+      // Stars
+      const tdStars = document.createElement("td");
+      tdStars.style.textAlign = "center";
+      if(editMode){
+        const starsIn = document.createElement("input");
+        starsIn.type = "number";
+        starsIn.className = "stars-input";
+        starsIn.value = item.stars ?? 0;
+        starsIn.addEventListener("change", () => {
+          let v = parseInt(starsIn.value) || 0;
+          update(ref(db, `players/${id}`), { stars: v });
+        });
+        tdStars.appendChild(starsIn);
+      } else {
+        tdStars.textContent = item.stars ?? 0;
+      }
+      tr.appendChild(tdStars);
 
-          const checkbox = document.createElement("input");
-          checkbox.type = "checkbox";
-          checkbox.addEventListener("change", () => {
-            if (checkbox.checked) selectedRows.add(key);
-            else selectedRows.delete(key);
-          });
-          actionsTd.appendChild(checkbox);
+      // Color
+      const tdColor = document.createElement("td");
+      tdColor.className = "color-cell";
+      if(editMode){
+        const colorIn = document.createElement("input");
+        colorIn.type = "color";
+        colorIn.value = item.color || "#0fd7c7";
+        colorIn.addEventListener("input", ()=>{
+          update(ref(db, `players/${id}`), { color: colorIn.value });
+        });
+        tdColor.appendChild(colorIn);
+      } else {
+        const d = document.createElement("div");
+        d.className = "color-box";
+        d.style.background = item.color || '#0fd7c7';
+        tdColor.appendChild(d);
+      }
+      tr.appendChild(tdColor);
 
-          const plusBtn = document.createElement("button");
-          plusBtn.className = "plus";
-          plusBtn.textContent = "➕";
-          plusBtn.addEventListener("click", () => update(ref(database, `players/${key}`), { stars: (parseInt(starsInput.value) || 0) + 1 }));
-          actionsTd.appendChild(plusBtn);
-
-          const minusBtn = document.createElement("button");
-          minusBtn.className = "minus";
-          minusBtn.textContent = "➖";
-          minusBtn.addEventListener("click", () => update(ref(database, `players/${key}`), { stars: Math.max(0, (parseInt(starsInput.value) || 0) - 1) }));
-          actionsTd.appendChild(minusBtn);
-
-          const deleteBtn = document.createElement("button");
-          deleteBtn.className = "delete";
-          deleteBtn.textContent = "🗑️";
-          deleteBtn.addEventListener("click", () => {
-            if (confirm(`Delete player "${player.name}"?`)) remove(ref(database, `players/${key}`));
-          });
-          actionsTd.appendChild(deleteBtn);
-
-          tr.appendChild(actionsTd);
-        }
-
-        nameInput.addEventListener("change", () => update(ref(database, `players/${key}`), { name: nameInput.value }));
-        starsInput.addEventListener("change", () => update(ref(database, `players/${key}`), { stars: Math.max(0, parseInt(starsInput.value) || 0) }));
-        colorInput.addEventListener("change", () => update(ref(database, `players/${key}`), { color: colorInput.value }));
-
-        tr.style.color = player.color || "#ffffff";
-        tableBody.appendChild(tr);
-      });
-    }
-
-    document.getElementById("search-no").addEventListener("input", renderTable);
-    document.getElementById("search-name").addEventListener("input", renderTable);
-
-    document.getElementById("global-plus").addEventListener("click", () => {
-      selectedRows.forEach(key => {
-        const player = playersData[key];
-        update(ref(database, `players/${key}`), { stars: (player.stars || 0) + 1 });
-      });
+      tbody.appendChild(tr);
     });
 
-    document.getElementById("global-minus").addEventListener("click", () => {
-      selectedRows.forEach(key => {
-        const player = playersData[key];
-        update(ref(database, `players/${key}`), { stars: Math.max(0, (player.stars || 0) - 1) });
-      });
+    applySearchFilter();
+  }
+
+  // ---------- search ----------
+  function applySearchFilter(){
+    const sNo = (searchSerial.value || "").toLowerCase();
+    const sName = (searchName.value || "").toLowerCase();
+    const rows = tbody.querySelectorAll("tr");
+    rows.forEach(row => {
+      const noCell = row.cells[0].textContent.toLowerCase();
+      const nameCell = row.cells[1].textContent.toLowerCase();
+      const ok = (noCell.includes(sNo) || nameCell.includes(sName));
+      row.style.display = ok ? '' : 'none';
+    });
+  }
+  searchSerial.addEventListener('input', applySearchFilter);
+  searchName.addEventListener('input', applySearchFilter);
+
+  // ---------- actions (only when edit mode) ----------
+  if(editMode){
+    addRowBtn.addEventListener('click', ()=>{
+      push(playersRef, { name: "New Player", stars: 0, color: "#0fd7c7" });
     });
 
-    addRowBtn.addEventListener("click", () => {
-      const newPlayerRef = push(ref(database, "players"));
-      set(newPlayerRef, { name: "New Player", stars: 0, color: "#ffffff" });
+    selectAllBtn.addEventListener('click', ()=>{
+      // check all checkboxes
+      const cbs = tbody.querySelectorAll('input[type="checkbox"]');
+      cbs.forEach(cb => { cb.checked = true; selected.add(cb.dataset.id); });
     });
-  </script>
+
+    removeSelBtn.addEventListener('click', ()=>{
+      if(selected.size === 0){ alert("No rows selected"); return; }
+      if(!confirm("Delete selected rows?")) return;
+      selected.forEach(id => remove(ref(db, `players/${id}`)));
+      selected.clear();
+    });
+  } else {
+    // hide action buttons when view-only
+    addRowBtn.style.display = 'none';
+    selectAllBtn.style.display = 'none';
+    removeSelBtn.style.display = 'none';
+  }
+</script>
 </body>
 </html>
