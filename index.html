@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Paid Push Editable Table</title>
+  <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      background: #121212;
+      color: #f0f0f0;
+      font-family: "Comic Neue", cursive, Arial, sans-serif;
+      padding: 20px;
+      max-width: 1000px;
+      margin: auto;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 15px;
+      font-size: 2.5rem;
+      text-shadow: 0 0 10px #64ffda;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      box-shadow: 0 0 20px #64ffda88;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    th, td {
+      border: 1px solid #64ffda;
+      padding: 8px;
+      text-align: center;
+      font-size: 1.1rem;
+    }
+    th {
+      background: #004d40;
+      color: #a7ffeb;
+      font-weight: 700;
+    }
+    input[type="text"], input[type="number"], input[type="color"] {
+      width: 90%;
+      padding: 4px;
+      font-size: 1rem;
+      background: #263238;
+      color: #a7ffeb;
+      border: 1px solid #64ffda;
+      border-radius: 4px;
+      text-align: center;
+    }
+    input[type="text"] { text-align: left; padding-left: 6px; }
+    button {
+      cursor: pointer;
+      padding: 5px 8px;
+      font-weight: 700;
+      font-size: 1rem;
+      border-radius: 6px;
+      border: none;
+      transition: background-color 0.3s ease;
+      user-select: none;
+    }
+    button.plus { background-color: #00c853; color: white; }
+    button.plus:hover { background-color: #00e676; }
+    button.minus { background-color: #d50000; color: white; }
+    button.minus:hover { background-color: #ff1744; }
+    button.delete { background-color: #ff6f00; color: white; }
+    button.delete:hover { background-color: #ff9100; }
+    #add-row-btn {
+      display: block;
+      margin: 15px auto;
+      background-color: #2979ff;
+      color: white;
+      font-size: 1.2rem;
+      padding: 8px 15px;
+      border-radius: 8px;
+      font-weight: 800;
+      box-shadow: 0 0 15px #2979ffaa;
+    }
+    #add-row-btn:hover { background-color: #448aff; }
+    .view-mode input, .view-mode button, .view-mode select { pointer-events: none; opacity: 0.6; }
+    .search-row input { width: 95%; padding: 4px; font-size: 1rem; background: #1e272c; color: #a7ffeb; border: 1px solid #64ffda; border-radius: 4px; }
+    .global-actions { margin-bottom: 10px; text-align: right; }
+    .global-actions button { margin-left: 5px; }
+  </style>
+</head>
+<body>
+  <h1>Paid Push Editable Table</h1>
+
+  <div class="global-actions" id="global-actions" style="display:none;">
+    <button class="plus" id="global-plus">➕ Add Star</button>
+    <button class="minus" id="global-minus">➖ Remove Star</button>
+  </div>
+
+  <table>
+    <thead>
+      <tr class="search-row">
+        <th><input type="text" id="search-no" placeholder="Search No."></th>
+        <th><input type="text" id="search-name" placeholder="Search Name"></th>
+        <th></th><th></th><th></th>
+      </tr>
+      <tr>
+        <th>No.</th>
+        <th>Player Name</th>
+        <th>Stars</th>
+        <th>Color</th>
+        <th class="actions-col">Actions</th>
+      </tr>
+    </thead>
+    <tbody id="table-body"></tbody>
+  </table>
+
+  <button id="add-row-btn">➕ Add New Player</button>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
+    import { getDatabase, ref, set, push, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyChO1aC8iQLW7BbMHzEU0mJqGexo2kj0hE",
+      authDomain: "red-paid-push-data.firebaseapp.com",
+      projectId: "red-paid-push-data",
+      storageBucket: "red-paid-push-data.firebasestorage.app",
+      messagingSenderId: "87626213146",
+      appId: "1:87626213146:web:dd1c8575ccdaf33454aea3",
+      databaseURL: "https://red-paid-push-data-default-rtdb.firebaseio.com/"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+
+    const tableBody = document.getElementById("table-body");
+    const addRowBtn = document.getElementById("add-row-btn");
+    const globalActions = document.getElementById("global-actions");
+
+    const urlParams = new URLSearchParams(window.location.search);
+    let mode = urlParams.get("mode") || "view";
+
+    if (mode === "edit") {
+      const password = prompt("Enter password to edit:");
+      if (password !== "mypassword") {
+        alert("Wrong password! Switching to view-only mode.");
+        mode = "view";
+      }
+    }
+
+    if (mode === "view") {
+      document.body.classList.add("view-mode");
+      document.querySelector(".actions-col").style.display = "none";
+      addRowBtn.style.display = "none";
+    } else {
+      document.body.classList.add("edit-mode");
+      globalActions.style.display = "block";
+    }
+
+    let playersData = {};
+    let selectedRows = new Set();
+
+    onValue(ref(database, "players"), (snapshot) => {
+      playersData = snapshot.val() || {};
+      renderTable();
+    });
+
+    function renderTable() {
+      tableBody.innerHTML = "";
+      const searchNo = document.getElementById("search-no").value.trim();
+      const searchName = document.getElementById("search-name").value.trim().toLowerCase();
+
+      Object.keys(playersData).forEach((key, idx) => {
+        const player = playersData[key];
+        const actualNo = idx + 1;
+
+        if (searchNo && actualNo.toString() !== searchNo) return;
+        if (searchName && !player.name.toLowerCase().includes(searchName)) return;
+
+        const tr = document.createElement("tr");
+
+        const noTd = document.createElement("td");
+        noTd.textContent = actualNo;
+        tr.appendChild(noTd);
+
+        const nameTd = document.createElement("td");
+        const nameInput = document.createElement("input");
+        nameInput.type = "text";
+        nameInput.value = player.name || "";
+        nameInput.disabled = mode === "view";
+        nameTd.appendChild(nameInput);
+        tr.appendChild(nameTd);
+
+        const starsTd = document.createElement("td");
+        const starsInput = document.createElement("input");
+        starsInput.type = "number";
+        starsInput.min = 0;
+        starsInput.value = player.stars || 0;
+        starsInput.disabled = mode === "view";
+        starsTd.appendChild(starsInput);
+        tr.appendChild(starsTd);
+
+        const colorTd = document.createElement("td");
+        const colorInput = document.createElement("input");
+        colorInput.type = "color";
+        colorInput.value = player.color || "#ffffff";
+        colorInput.disabled = mode === "view";
+        colorTd.appendChild(colorInput);
+        tr.appendChild(colorTd);
+
+        if (mode === "edit") {
+          const actionsTd = document.createElement("td");
+
+          const checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.addEventListener("change", () => {
+            if (checkbox.checked) selectedRows.add(key);
+            else selectedRows.delete(key);
+          });
+          actionsTd.appendChild(checkbox);
+
+          const plusBtn = document.createElement("button");
+          plusBtn.className = "plus";
+          plusBtn.textContent = "➕";
+          plusBtn.addEventListener("click", () => update(ref(database, `players/${key}`), { stars: (parseInt(starsInput.value) || 0) + 1 }));
+          actionsTd.appendChild(plusBtn);
+
+          const minusBtn = document.createElement("button");
+          minusBtn.className = "minus";
+          minusBtn.textContent = "➖";
+          minusBtn.addEventListener("click", () => update(ref(database, `players/${key}`), { stars: Math.max(0, (parseInt(starsInput.value) || 0) - 1) }));
+          actionsTd.appendChild(minusBtn);
+
+          const deleteBtn = document.createElement("button");
+          deleteBtn.className = "delete";
+          deleteBtn.textContent = "🗑️";
+          deleteBtn.addEventListener("click", () => {
+            if (confirm(`Delete player "${player.name}"?`)) remove(ref(database, `players/${key}`));
+          });
+          actionsTd.appendChild(deleteBtn);
+
+          tr.appendChild(actionsTd);
+        }
+
+        nameInput.addEventListener("change", () => update(ref(database, `players/${key}`), { name: nameInput.value }));
+        starsInput.addEventListener("change", () => update(ref(database, `players/${key}`), { stars: Math.max(0, parseInt(starsInput.value) || 0) }));
+        colorInput.addEventListener("change", () => update(ref(database, `players/${key}`), { color: colorInput.value }));
+
+        tr.style.color = player.color || "#ffffff";
+        tableBody.appendChild(tr);
+      });
+    }
+
+    document.getElementById("search-no").addEventListener("input", renderTable);
+    document.getElementById("search-name").addEventListener("input", renderTable);
+
+    document.getElementById("global-plus").addEventListener("click", () => {
+      selectedRows.forEach(key => {
+        const player = playersData[key];
+        update(ref(database, `players/${key}`), { stars: (player.stars || 0) + 1 });
+      });
+    });
+
+    document.getElementById("global-minus").addEventListener("click", () => {
+      selectedRows.forEach(key => {
+        const player = playersData[key];
+        update(ref(database, `players/${key}`), { stars: Math.max(0, (player.stars || 0) - 1) });
+      });
+    });
+
+    addRowBtn.addEventListener("click", () => {
+      const newPlayerRef = push(ref(database, "players"));
+      set(newPlayerRef, { name: "New Player", stars: 0, color: "#ffffff" });
+    });
+  </script>
+</body>
+</html>
