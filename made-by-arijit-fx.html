@@ -73,6 +73,7 @@
     padding: 12px 8px;
     text-align: center;
     font-size: 1rem;
+    transition: background-color 0.3s;
   }
   th {
     background: #004d40;
@@ -126,10 +127,13 @@
     box-shadow: 0 0 15px #2979ffaa;
   }
   #add-row-btn:hover { background: #448aff; box-shadow: 0 0 25px #448affcc; }
+  
   /* Selection Highlight */
   tr.selected {
     background-color: #2979ff4d !important;
-    box-shadow: 0 0 10px var(--accent-color) inset;
+  }
+  td:has(input[type=checkbox]) {
+     background-color: transparent;
   }
   input[type="checkbox"] {
     width: 18px;
@@ -199,6 +203,9 @@
   const playersRef = ref(db, "players");
 
   let editMode = false;
+  // --- NEW: A set to store the keys of selected rows ---
+  let selectedKeys = new Set();
+
   const params = new URLSearchParams(window.location.search);
   
   if (params.get("mode") === "edit") {
@@ -206,7 +213,6 @@
     if (pass === "a7391") {
       editMode = true;
       document.body.classList.add('edit-mode');
-      // Show all edit-only elements
       document.querySelectorAll('.edit-only').forEach(el => el.style.display = 'revert');
     } else {
       if (pass) alert("Incorrect Password. Viewing in read-only mode.");
@@ -220,15 +226,16 @@
   onValue(playersRef, (snapshot) => {
     const data = snapshot.val() || {};
     renderTable(data);
-    search(); // Re-apply search after table re-render
+    search(); 
   });
 
   function renderTable(data) {
     const players = Object.entries(data);
-    tableBody.innerHTML = "";
+    const fragment = document.createDocumentFragment();
+
     players.forEach(([key, player], index) => {
       const tr = document.createElement("tr");
-      tr.dataset.key = key; // Store firebase key on the row
+      tr.dataset.key = key; 
 
       // --- Checkbox (Edit Mode) ---
       if (editMode) {
@@ -236,9 +243,26 @@
         const checkbox = document.createElement("input");
         checkbox.type = "checkbox";
         checkbox.className = "row-selector";
-        checkbox.onchange = () => tr.classList.toggle('selected', checkbox.checked);
+        
+        // --- UPDATED LOGIC ---
+        // Restore selection state from the Set
+        if (selectedKeys.has(key)) {
+            checkbox.checked = true;
+            tr.classList.add('selected');
+        }
+
+        // When the checkbox is clicked, update the Set and the row's class
+        checkbox.onchange = () => {
+          tr.classList.toggle('selected', checkbox.checked);
+          if (checkbox.checked) {
+            selectedKeys.add(key);
+          } else {
+            selectedKeys.delete(key);
+          }
+        };
+        
         tdSelect.appendChild(checkbox);
-        tr.appendChild(tdSelect);
+        fragment.appendChild(tr).appendChild(tdSelect);
       }
 
       // --- No. ---
@@ -307,8 +331,11 @@
         tr.appendChild(tdAct);
       }
 
-      tableBody.appendChild(tr);
+      fragment.appendChild(tr);
     });
+
+    tableBody.innerHTML = "";
+    tableBody.appendChild(fragment);
   }
 
   // --- Event Listeners for Buttons ---
@@ -319,11 +346,14 @@
     };
 
     const updateSelected = (change) => {
-      document.querySelectorAll('tr.selected').forEach(tr => {
-        const key = tr.dataset.key;
-        const currentStars = parseInt(tr.querySelector('input[type="number"]').value, 10);
-        const newStars = Math.max(0, currentStars + change);
-        update(ref(db, `players/${key}`), { stars: newStars });
+      // Use the Set of selected keys to update Firebase
+      selectedKeys.forEach(key => {
+        const row = tableBody.querySelector(`tr[data-key="${key}"]`);
+        if(row) {
+            const currentStars = parseInt(row.querySelector('input[type="number"]').value, 10);
+            const newStars = Math.max(0, currentStars + change);
+            update(ref(db, `players/${key}`), { stars: newStars });
+        }
       });
     };
 
@@ -338,7 +368,7 @@
   function search() {
     const term = searchInput.value.toLowerCase();
     Array.from(tableBody.rows).forEach(row => {
-      const noCell = row.cells[editMode ? 1 : 0]; // Adjust index based on mode
+      const noCell = row.cells[editMode ? 1 : 0];
       const nameCell = row.cells[editMode ? 2 : 1];
       
       const no = noCell.textContent.toLowerCase();
