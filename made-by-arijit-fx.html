@@ -152,14 +152,16 @@ const mode = params.get("mode");
 const editMode = mode === "edit";
 
 if (editMode) {
+  const urlParams = new URLSearchParams(window.location.search);
+const mode = urlParams.get("mode");
+
+if (mode === "edit") {
   const pass = prompt("Enter password to edit:");
-  if (pass !== "1234") { // change password here
-    alert("Wrong password");
-    window.location.href = window.location.pathname + "?mode=view";
-  } else {
-    document.getElementById("add-row-btn").style.display = "block";
+  if (pass !== "a7391") {
+    alert("Wrong password! Switching to view mode.");
+    window.location.search = "?mode=view";
   }
-} else {
+}
   document.getElementById("actions-header").style.display = "none";
 }
 
