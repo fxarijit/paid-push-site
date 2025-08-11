@@ -10,9 +10,6 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
 
-<!-- Color Picker Library -->
-<script src="https://cdn.jsdelivr.net/npm/@jaames/iro@5"></script>
-
 <style>
   :root {
     --primary-color: #64ffda;
@@ -82,6 +79,7 @@
     background: #004d40;
     color: var(--primary-color);
   }
+  /* Edit-mode only elements are hidden by default */
   .edit-only {
     display: none;
   }
@@ -119,7 +117,7 @@
   .colorbtn { background: #673ab7; }
   .colorbtn:hover { background: #7e57c2; }
   #add-row-btn {
-    display: none;
+    display: none; /* JS will change to block in edit mode */
     margin: 25px auto;
     background: var(--accent-color);
     padding: 12px 25px;
@@ -130,8 +128,12 @@
   }
   #add-row-btn:hover { background: #448aff; box-shadow: 0 0 25px #448affcc; }
   
+  /* Selection Highlight */
   tr.selected {
     background-color: #2979ff4d !important;
+  }
+  td:has(input[type=checkbox]) {
+     background-color: transparent;
   }
   input[type="checkbox"] {
     width: 18px;
@@ -142,25 +144,7 @@
   .col-no { width: 5%; }
   .col-stars { width: 15%; }
   .col-actions { width: 25%; }
-
-  /* --- NEW: Color Picker Styles --- */
-  #color-picker-backdrop {
-    display: none;
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    z-index: 99;
-  }
-  #color-picker-wrapper {
-    display: none;
-    position: absolute;
-    z-index: 100;
-    background: #37474f;
-    border-radius: 10px;
-    padding: 10px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-  }
-
+  
   @media (max-width: 768px) {
     body { padding: 10px; }
     h1 { font-size: 1.8rem; }
@@ -185,11 +169,11 @@
 <table>
   <thead>
     <tr>
-      <th class="col-select edit-only">✔️</th>
+      <th class="col-select edit-only" id="select-header">✔️</th>
       <th class="col-no">No.</th>
       <th>Player Name</th>
       <th class="col-stars">Stars</th>
-      <th class="col-actions edit-only">Actions</th>
+      <th class="col-actions edit-only" id="actions-header">Actions</th>
     </tr>
   </thead>
   <tbody id="table-body"></tbody>
@@ -197,18 +181,12 @@
 
 <button id="add-row-btn" class="edit-only">➕ Add New Player</button>
 
-<!-- NEW: This is where the color picker will live -->
-<div id="color-picker-backdrop"></div>
-<div id="color-picker-wrapper">
-    <div id="color-picker"></div>
-</div>
-
 <!-- Firebase SDK -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getDatabase, ref, set, push, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-  // Firebase configuration
+  // Your web app's Firebase configuration
   const firebaseConfig = {
     apiKey: "AIzaSyChO1aC8iQLW7BbMHzEU0mJqGexo2kj0hE",
     authDomain: "red-paid-push-data.firebaseapp.com",
@@ -219,208 +197,191 @@
     appId: "1:87626213146:web:dd1c8575ccdaf33454aea3"
   };
 
+  // Initialize Firebase
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
   const playersRef = ref(db, "players");
 
   let editMode = false;
+  // --- NEW: A set to store the keys of selected rows ---
   let selectedKeys = new Set();
-  // --- NEW: Variables for color picker ---
-  let colorPicker = null;
-  let activeColorUpdateKey = null;
 
   const params = new URLSearchParams(window.location.search);
+  
   if (params.get("mode") === "edit") {
     const pass = prompt("Enter Edit Mode Password:");
     if (pass === "a7391") {
       editMode = true;
+      document.body.classList.add('edit-mode');
       document.querySelectorAll('.edit-only').forEach(el => el.style.display = 'revert');
-      setupColorPicker(); // Initialize the color picker
     } else {
       if (pass) alert("Incorrect Password. Viewing in read-only mode.");
       window.history.replaceState(null, '', window.location.pathname);
     }
   }
-  
+
   const tableBody = document.getElementById("table-body");
-  
+
+  // Live data listener
   onValue(playersRef, (snapshot) => {
     const data = snapshot.val() || {};
     renderTable(data);
-    search();
+    search(); 
   });
 
-  // --- NEW: Setup function for the color picker ---
-  function setupColorPicker() {
-    colorPicker = new iro.ColorPicker('#color-picker', {
-        width: 180,
-        color: "#fff",
-        borderWidth: 1,
-        borderColor: "#fff",
-        layout: [ { component: iro.ui.Wheel }, { component: iro.ui.Slider, options: { sliderType: 'value' }}]
-    });
-
-    // Update Firebase in real-time when color changes
-    colorPicker.on('color:change', function(color) {
-        if (activeColorUpdateKey) {
-            update(ref(db, `players/${activeColorUpdateKey}`), { color: color.hexString });
-        }
-    });
-
-    // Hide the picker when clicking outside of it
-    document.getElementById('color-picker-backdrop').addEventListener('click', hideColorPicker);
-  }
-
-  function showColorPicker(key, initialColor, buttonElement) {
-    activeColorUpdateKey = key;
-    colorPicker.color.set(initialColor);
-
-    const wrapper = document.getElementById('color-picker-wrapper');
-    const backdrop = document.getElementById('color-picker-backdrop');
-    
-    // Position picker near the button
-    const btnRect = buttonElement.getBoundingClientRect();
-    wrapper.style.left = `${btnRect.left - (wrapper.offsetWidth / 2) + (btnRect.width / 2)}px`;
-    wrapper.style.top = `${window.scrollY + btnRect.bottom + 10}px`;
-
-    wrapper.style.display = 'block';
-    backdrop.style.display = 'block';
-  }
-
-  function hideColorPicker() {
-    document.getElementById('color-picker-wrapper').style.display = 'none';
-    document.getElementById('color-picker-backdrop').style.display = 'none';
-    activeColorUpdateKey = null;
-  }
-  
   function renderTable(data) {
     const players = Object.entries(data);
     const fragment = document.createDocumentFragment();
 
     players.forEach(([key, player], index) => {
-        const tr = document.createElement("tr");
-        tr.dataset.key = key;
+      const tr = document.createElement("tr");
+      tr.dataset.key = key; 
 
-        if (editMode) {
-            const tdSelect = document.createElement("td");
-            const checkbox = document.createElement("input");
-            checkbox.type = "checkbox";
-            if (selectedKeys.has(key)) {
-                checkbox.checked = true;
-                tr.classList.add('selected');
-            }
-            checkbox.onchange = () => {
-                tr.classList.toggle('selected', checkbox.checked);
-                checkbox.checked ? selectedKeys.add(key) : selectedKeys.delete(key);
-            };
-            tdSelect.appendChild(checkbox);
-            tr.appendChild(tdSelect);
+      // --- Checkbox (Edit Mode) ---
+      if (editMode) {
+        const tdSelect = document.createElement("td");
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.className = "row-selector";
+        
+        // --- UPDATED LOGIC ---
+        // Restore selection state from the Set
+        if (selectedKeys.has(key)) {
+            checkbox.checked = true;
+            tr.classList.add('selected');
         }
 
-        const tdNo = document.createElement("td");
-        tdNo.textContent = index + 1;
-        tr.appendChild(tdNo);
+        // When the checkbox is clicked, update the Set and the row's class
+        checkbox.onchange = () => {
+          tr.classList.toggle('selected', checkbox.checked);
+          if (checkbox.checked) {
+            selectedKeys.add(key);
+          } else {
+            selectedKeys.delete(key);
+          }
+        };
+        
+        tdSelect.appendChild(checkbox);
+        fragment.appendChild(tr).appendChild(tdSelect);
+      }
 
-        const tdName = document.createElement("td");
-        tdName.style.textAlign = 'left';
-        tdName.style.color = player.color || 'inherit';
-        tdName.style.fontWeight = 'bold';
-        if (editMode) {
-            const nameInput = document.createElement("input");
-            nameInput.type = "text";
-            nameInput.value = player.name || "";
-            nameInput.style.color = player.color || 'inherit';
-            nameInput.onchange = () => update(ref(db, `players/${key}`), { name: nameInput.value });
-            tdName.appendChild(nameInput);
-        } else {
-            tdName.textContent = player.name || "";
-        }
-        tr.appendChild(tdName);
+      // --- No. ---
+      const tdNo = document.createElement("td");
+      tdNo.textContent = index + 1;
+      tr.appendChild(tdNo);
 
-        const tdStars = document.createElement("td");
-        if (editMode) {
-            const starsInput = document.createElement("input");
-            starsInput.type = "number";
-            starsInput.value = player.stars || 0;
-            starsInput.min = 0;
-            starsInput.onchange = () => update(ref(db, `players/${key}`), { stars: parseInt(starsInput.value, 10) || 0 });
-            tdStars.appendChild(starsInput);
-        } else {
-            tdStars.textContent = player.stars || 0;
-        }
-        tr.appendChild(tdStars);
+      // --- Name ---
+      const tdName = document.createElement("td");
+      tdName.style.textAlign = 'left';
+      tdName.style.color = player.color || 'inherit';
+      tdName.style.fontWeight = 'bold';
+      if (editMode) {
+        const nameInput = document.createElement("input");
+        nameInput.type = "text";
+        nameInput.value = player.name || "";
+        nameInput.style.color = player.color || 'inherit';
+        nameInput.onchange = () => update(ref(db, `players/${key}`), { name: nameInput.value });
+        tdName.appendChild(nameInput);
+      } else {
+        tdName.textContent = player.name || "";
+      }
+      tr.appendChild(tdName);
 
-        if (editMode) {
-            const tdAct = document.createElement("td");
-            const plusBtn = document.createElement("button");
-            plusBtn.className = "plus";
-            plusBtn.textContent = "+";
-            plusBtn.onclick = () => update(ref(db, `players/${key}`), { stars: (player.stars || 0) + 1 });
+      // --- Stars ---
+      const tdStars = document.createElement("td");
+      if (editMode) {
+        const starsInput = document.createElement("input");
+        starsInput.type = "number";
+        starsInput.value = player.stars || 0;
+        starsInput.min = 0;
+        starsInput.onchange = () => update(ref(db, `players/${key}`), { stars: parseInt(starsInput.value, 10) || 0 });
+        tdStars.appendChild(starsInput);
+      } else {
+        tdStars.textContent = player.stars || 0;
+      }
+      tr.appendChild(tdStars);
 
-            const minusBtn = document.createElement("button");
-            minusBtn.className = "minus";
-            minusBtn.textContent = "−";
-            minusBtn.onclick = () => update(ref(db, `players/${key}`), { stars: Math.max(0, (player.stars || 0) - 1) });
+      // --- Actions (Edit Mode) ---
+      if (editMode) {
+        const tdAct = document.createElement("td");
+        const plusBtn = document.createElement("button");
+        plusBtn.className = "plus";
+        plusBtn.textContent = "+";
+        plusBtn.onclick = () => update(ref(db, `players/${key}`), { stars: (player.stars || 0) + 1 });
 
-            const delBtn = document.createElement("button");
-            delBtn.className = "delete";
-            delBtn.textContent = "🗑";
-            delBtn.onclick = () => { if (confirm(`Delete ${player.name}?`)) remove(ref(db, `players/${key}`)); };
-            
-            const colorBtn = document.createElement("button");
-            colorBtn.className = "colorbtn";
-            colorBtn.textContent = "🎨";
-            // --- UPDATED: This now opens the color wheel ---
-            colorBtn.onclick = (e) => {
-                showColorPicker(key, player.color || '#ffffff', e.currentTarget);
-            };
-            
-            tdAct.append(plusBtn, minusBtn, delBtn, colorBtn);
-            tr.appendChild(tdAct);
-        }
+        const minusBtn = document.createElement("button");
+        minusBtn.className = "minus";
+        minusBtn.textContent = "−";
+        minusBtn.onclick = () => update(ref(db, `players/${key}`), { stars: Math.max(0, (player.stars || 0) - 1) });
 
-        fragment.appendChild(tr);
+        const delBtn = document.createElement("button");
+        delBtn.className = "delete";
+        delBtn.textContent = "🗑";
+        delBtn.onclick = () => { if (confirm(`Delete ${player.name}?`)) remove(ref(db, `players/${key}`)); };
+        
+        const colorBtn = document.createElement("button");
+        colorBtn.className = "colorbtn";
+        colorBtn.textContent = "🎨";
+        colorBtn.onclick = () => {
+          const newColor = prompt("Enter a color for the name (e.g., #ff00ff):", player.color || "#f0f0f0");
+          if (newColor) update(ref(db, `players/${key}`), { color: newColor });
+        };
+        
+        tdAct.append(plusBtn, minusBtn, delBtn, colorBtn);
+        tr.appendChild(tdAct);
+      }
+
+      fragment.appendChild(tr);
     });
 
     tableBody.innerHTML = "";
     tableBody.appendChild(fragment);
   }
 
+  // --- Event Listeners for Buttons ---
   if (editMode) {
     document.getElementById("add-row-btn").onclick = () => {
-        const newRef = push(playersRef);
-        set(newRef, { name: "New Player", stars: 0, color: "#f0f0f0" });
+      const newRef = push(playersRef);
+      set(newRef, { name: "New Player", stars: 0, color: "#f0f0f0" });
     };
 
     const updateSelected = (change) => {
-        selectedKeys.forEach(key => {
-            const row = tableBody.querySelector(`tr[data-key="${key}"]`);
-            if (row) {
-                const currentStars = parseInt(row.querySelector('input[type="number"]').value, 10);
-                update(ref(db, `players/${key}`), { stars: Math.max(0, currentStars + change) });
-            }
-        });
+      // Use the Set of selected keys to update Firebase
+      selectedKeys.forEach(key => {
+        const row = tableBody.querySelector(`tr[data-key="${key}"]`);
+        if(row) {
+            const currentStars = parseInt(row.querySelector('input[type="number"]').value, 10);
+            const newStars = Math.max(0, currentStars + change);
+            update(ref(db, `players/${key}`), { stars: newStars });
+        }
+      });
     };
 
     document.getElementById("global-plus").onclick = () => updateSelected(1);
     document.getElementById("global-minus").onclick = () => updateSelected(-1);
   }
 
+  // --- Search ---
   const searchInput = document.getElementById("search-box");
   searchInput.addEventListener("input", search);
 
   function search() {
     const term = searchInput.value.toLowerCase();
     Array.from(tableBody.rows).forEach(row => {
-        const noCell = row.cells[editMode ? 1 : 0];
-        const nameCell = row.cells[editMode ? 2 : 1];
-        
-        const no = noCell.textContent.toLowerCase();
-        let name = (editMode && nameCell.querySelector('input'))
-            ? nameCell.querySelector('input').value.toLowerCase()
-            : nameCell.textContent.toLowerCase();
-        
-        row.style.display = (no.includes(term) || name.includes(term)) ? "" : "none";
+      const noCell = row.cells[editMode ? 1 : 0];
+      const nameCell = row.cells[editMode ? 2 : 1];
+      
+      const no = noCell.textContent.toLowerCase();
+      let name = '';
+
+      if (editMode && nameCell.querySelector('input')) {
+        name = nameCell.querySelector('input').value.toLowerCase();
+      } else {
+        name = nameCell.textContent.toLowerCase();
+      }
+      
+      const isVisible = no.includes(term) || name.includes(term);
+      row.style.display = isVisible ? "" : "none";
     });
   }
 </script>
