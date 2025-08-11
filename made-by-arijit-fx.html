@@ -1,245 +1,138 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Paid Push — Player Table (index-v2)</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Paid Push Editable Table</title>
 
-<!-- Fonts -->
-<link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&display=swap" rel="stylesheet">
+<!-- Google Font -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
 
 <style>
-  :root{
-    --bg:#070707;
-    --panel:#0b0f0f;
-    --neon:#0fd7c7;
-    --muted:#123232;
-    --accent-blue:#2fa6ff;
-    --card:#071212;
+  body {
+    background: #121212;
+    color: #f0f0f0;
+    font-family: 'Noto Serif', serif;
+    padding: 10px;
+    max-width: 1000px;
+    margin: auto;
   }
-
-  *{box-sizing:border-box}
-  body{
-    margin:0;
-    min-height:100vh;
-    background:linear-gradient(180deg,#000 0%,#031313 100%);
-    color:var(--neon);
-    font-family: "Comic Neue", cursive, Arial, sans-serif;
-    -webkit-font-smoothing:antialiased;
-    padding:20px;
-    display:flex;
-    justify-content:center;
+  h1 {
+    text-align: center;
+    margin-bottom: 15px;
+    font-size: 2rem;
+    color: #a7ffeb;
+    text-shadow: 0 0 10px #64ffda;
   }
-
-  .container{
-    width:100%;
-    max-width:980px;
+  .search-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
   }
-
-  h1{
-    text-align:center;
-    color:var(--neon);
-    font-size:34px;
-    margin:8px 0 18px;
-    text-shadow:0 0 18px rgba(15,215,190,0.18);
+  .search-row input {
+    flex: 1;
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid #64ffda;
+    background: #263238;
+    color: #a7ffeb;
   }
-
-  .search-row{
-    display:flex;
-    gap:12px;
-    justify-content:center;
-    margin-bottom:14px;
-  }
-  .search {
-    width:100%;
-    max-width:720px;
-    padding:10px 12px;
-    border-radius:8px;
-    border:2px solid rgba(15,215,190,0.12);
-    background:transparent;
-    color:var(--neon);
-    font-weight:700;
-    outline:none;
-  }
-  .search::placeholder{ color:rgba(160,240,230,0.2); font-weight:600; }
-
-  .table-wrap{
-    background:linear-gradient(180deg, rgba(0,0,0,0.24), rgba(0,0,0,0.12));
-    padding:10px;
-    border-radius:10px;
-    box-shadow:0 8px 40px rgba(0,0,0,0.6), inset 0 0 40px rgba(15,215,190,0.02);
-    border:1px solid rgba(15,215,190,0.06);
-    overflow:auto;
-  }
-
   table {
-    width:100%;
-    border-collapse:separate;
-    border-spacing:0 12px;
-    min-width:860px;
+    width: 100%;
+    border-collapse: collapse;
+    box-shadow: 0 0 15px #64ffda88;
+    border-radius: 8px;
+    overflow: hidden;
   }
-
-  thead th{
-    position:sticky;
-    top:0;
-    background:linear-gradient(90deg,#044d44,#013c3c);
-    color:#bff7ee;
-    padding:14px 12px;
-    text-align:left;
-    font-weight:800;
-    font-size:16px;
+  th, td {
+    border: 1px solid #64ffda;
+    padding: 8px;
+    text-align: center;
+    font-size: 1rem;
   }
-
-  tbody tr{
-    display:table-row;
-    background:linear-gradient(180deg, rgba(0,0,0,0.25), rgba(0,0,0,0.14));
-    box-shadow:0 2px 0 rgba(0,0,0,0.6);
-    border-radius:8px;
+  th {
+    background: #004d40;
+    color: #a7ffeb;
   }
-
-  tbody td{
-    padding:14px 12px;
-    vertical-align:middle;
-    color:#9bded6;
-    font-weight:700;
-    font-size:15px;
-    border-left: 1px solid rgba(15,215,190,0.03);
-    border-right: 1px solid rgba(15,215,190,0.03);
+  input[type="text"], input[type="number"] {
+    width: 90%;
+    padding: 4px;
+    background: #263238;
+    color: #a7ffeb;
+    border: 1px solid #64ffda;
+    border-radius: 4px;
+    text-align: center;
   }
-
-  .col-no{ width:72px; text-align:center; color:#dffbf7; font-weight:900; }
-  .col-name{ width:60%; text-align:left; }
-  .col-stars{ width:110px; text-align:center; }
-  .col-actions{ width:160px; text-align:center; }
-
-  .name-input, .stars-input {
-    width:100%;
-    padding:8px 10px;
-    border-radius:8px;
-    border:1px solid rgba(15,215,190,0.08);
-    background: rgba(2,10,10,0.35);
-    color:var(--neon);
-    font-weight:800;
-    text-transform:uppercase;
-    letter-spacing:0.6px;
+  input[type="text"] {
+    text-align: left;
+    padding-left: 10px;
   }
-  .stars-input { text-align:center; max-width:84px; margin:0 auto; }
-
-  .small-btn{
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    width:44px;
-    height:44px;
-    border-radius:8px;
-    border:none;
-    margin:0 6px;
-    color:#fff;
-    font-weight:900;
-    cursor:pointer;
-    box-shadow:0 6px 16px rgba(0,0,0,0.6);
-    transition:transform .12s ease, box-shadow .12s ease;
+  button {
+    cursor: pointer;
+    padding: 5px 10px;
+    margin: 2px;
+    border: none;
+    border-radius: 5px;
+    font-size: 1rem;
+    color: white;
+    transition: background 0.3s;
   }
-  .small-btn:active{ transform:translateY(1px); }
-
-  .btn-plus{ background:#07a04f; box-shadow:0 4px 16px rgba(7,160,79,0.12); }
-  .btn-minus{ background:#c92b2b; box-shadow:0 4px 16px rgba(201,43,43,0.12); }
-  .btn-delete{ background:#d87f1f; box-shadow:0 4px 16px rgba(216,127,31,0.12); }
-
-  .color-btn{
-    width:36px; height:36px; border-radius:7px; border:1px solid rgba(255,255,255,0.06);
-    background:transparent; cursor:pointer; margin-left:6px;
+  .plus { background: #00c853; }
+  .plus:hover { background: #00e676; }
+  .minus { background: #d50000; }
+  .minus:hover { background: #ff1744; }
+  .delete { background: #ff6f00; }
+  .delete:hover { background: #ff9100; }
+  .colorbtn { background: #2962ff; }
+  .colorbtn:hover { background: #448aff; }
+  #add-row-btn {
+    display: block;
+    margin: 20px auto;
+    background: #2979ff;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-weight: bold;
+    font-size: 1.2rem;
+    box-shadow: 0 0 15px #2979ffaa;
   }
-
-  .row-selected {
-    background: linear-gradient(90deg, rgba(47,166,255,0.06), rgba(15,215,190,0.04)) !important;
-    box-shadow: inset 0 0 18px rgba(47,166,255,0.06);
+  #add-row-btn:hover { background: #448aff; box-shadow: 0 0 25px #448affcc; }
+  @media (max-width: 600px) {
+    th, td { font-size: 0.9rem; padding: 6px; }
+    input[type="text"], input[type="number"] { font-size: 0.9rem; }
   }
-
-  .checkbox {
-    width:18px; height:18px; cursor:pointer;
-  }
-
-  .add-btn {
-    display:block;
-    margin:22px auto 10px;
-    background:linear-gradient(90deg,#2fa6ff,#64b8ff);
-    color:#002428;
-    padding:12px 22px;
-    border-radius:12px;
-    border:2px solid rgba(255,255,255,0.06);
-    font-weight:900;
-    box-shadow:0 8px 40px rgba(47,166,255,0.12);
-    cursor:pointer;
-    text-transform:none;
-  }
-
-  /* hide edit-only elements in view mode via .view-mode class on body */
-  body.view-mode .name-input,
-  body.view-mode .stars-input,
-  body.view-mode .small-btn,
-  body.view-mode .checkbox,
-  body.view-mode .color-btn,
-  body.view-mode #add-row-btn,
-  body.view-mode #edit-controls {
-    display:none !important;
-  }
-  body.view-mode .col-actions { text-align:center; }
-
-  /* responsive for mobile like the screenshot */
-  @media (max-width:760px){
-    .container{ padding:0 10px; }
-    thead th{ display:none; }
-    table { border-spacing:0 8px; }
-    tbody tr{ display:block; padding:10px; margin-bottom:10px; border-radius:10px; }
-    tbody td { display:block; padding:10px 12px; border:none; }
-    .col-no{ text-align:left; }
-    .col-actions{ text-align:left; }
-    .name-input { font-size:14px; }
-    .stars-input { font-size:14px; }
-    .small-btn { width:40px; height:40px; margin:0 4px; }
-  }
-
 </style>
 </head>
-<body class="">
-  <div class="container">
-    <h1>Paid Push Editable Table</h1>
+<body>
 
-    <div class="search-row">
-      <input id="search" class="search" placeholder="Search by No. or Player Name" />
-    </div>
+<h1>Paid Push Editable Table</h1>
 
-    <div class="table-wrap">
-      <table aria-label="Player list">
-        <thead>
-          <tr>
-            <th style="width:48px"></th>
-            <th class="col-no">No.</th>
-            <th class="col-name">Player Name</th>
-            <th class="col-stars">Stars</th>
-            <th class="col-actions">Actions</th>
-          </tr>
-        </thead>
-        <tbody id="tbody"></tbody>
-      </table>
-    </div>
+<div class="search-row">
+  <input type="text" id="search-no" placeholder="Search No.">
+  <input type="text" id="search-name" placeholder="Search Name">
+</div>
 
-    <div id="edit-controls" style="margin-top:12px; display:flex; gap:8px; justify-content:center;">
-      <button id="global-plus" class="add-btn" title="Add +1 to selected">➕ Global</button>
-      <button id="global-minus" class="add-btn" title="Subtract 1 from selected">➖ Global</button>
-    </div>
+<table>
+  <thead>
+    <tr id="table-header">
+      <th>No.</th>
+      <th>Player Name</th>
+      <th>Stars</th>
+      <th id="actions-header">Actions</th>
+    </tr>
+  </thead>
+  <tbody id="table-body"></tbody>
+</table>
 
-    <button id="add-row-btn" class="add-btn">➕ Add New Player</button>
-  </div>
+<button id="add-row-btn" style="display:none;">➕ Add New Player</button>
 
+<!-- Firebase -->
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-import {
-  getDatabase, ref, onValue, push, update, remove, get, child
-} from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
+import { getDatabase, ref, set, push, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-database.js";
 
-// ----- FIREBASE CONFIG (your project) -----
+// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyChO1aC8iQLW7BbMHzEU0mJqGexo2kj0hE",
   authDomain: "red-paid-push-data.firebaseapp.com",
@@ -249,251 +142,136 @@ const firebaseConfig = {
   messagingSenderId: "87626213146",
   appId: "1:87626213146:web:dd1c8575ccdaf33454aea3"
 };
+
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// ----- MODE & PASSWORD -----
-const EDIT_PASSWORD = "mypassword"; // CHANGE to your desired password
-const modeParam = new URLSearchParams(window.location.search).get("mode");
-let editMode = false;
-if (modeParam === "edit") {
-  const p = prompt("Enter edit password:");
-  if (p === EDIT_PASSWORD) {
-    editMode = true;
-    document.body.classList.remove('view-mode');
+// Mode check
+const params = new URLSearchParams(window.location.search);
+const mode = params.get("mode");
+const editMode = mode === "edit";
+
+if (editMode) {
+  const pass = prompt("Enter password to edit:");
+  if (pass !== "1234") { // change password here
+    alert("Wrong password");
+    window.location.href = window.location.pathname + "?mode=view";
   } else {
-    alert("Wrong password. Opening in view-only mode.");
-    document.body.classList.add('view-mode');
+    document.getElementById("add-row-btn").style.display = "block";
   }
 } else {
-  document.body.classList.add('view-mode');
+  document.getElementById("actions-header").style.display = "none";
 }
 
-// DOM
-const tbody = document.getElementById('tbody');
-const searchEl = document.getElementById('search');
-const addRowBtn = document.getElementById('add-row-btn');
-const globalPlus = document.getElementById('global-plus');
-const globalMinus = document.getElementById('global-minus');
-const editControls = document.getElementById('edit-controls');
+const tableBody = document.getElementById("table-body");
 
-// show/hide edit controls
-if (!editMode) {
-  editControls.style.display = 'none';
-  addRowBtn.style.display = 'none';
-}
+// Live data load
+onValue(ref(db, "players"), (snapshot) => {
+  const data = snapshot.val() || {};
+  renderTable(data);
+});
 
-// data cache
-let dataCache = {}; // id -> {name,stars,color}
-
-// helper to create element with classes
-function el(tag, cls){ const e=document.createElement(tag); if(cls) e.className=cls; return e; }
-
-// render table from dataCache
-function renderTable(dataObj){
-  dataCache = dataObj || {};
-  tbody.innerHTML = "";
-  const entries = Object.entries(dataCache);
-  // render each entry in order
-  entries.forEach(([id, player], index) => {
-    const tr = el('tr');
-    tr.dataset.id = id;
-
-    // checkbox cell (edit mode only)
-    const tdCheck = el('td');
-    if (editMode){
-      const cb = el('input','checkbox');
-      cb.type = 'checkbox';
-      cb.className = 'checkbox';
-      cb.addEventListener('change', () => {
-        tr.classList.toggle('row-selected', cb.checked);
-      });
-      tdCheck.appendChild(cb);
-    }
-    tr.appendChild(tdCheck);
+function renderTable(data) {
+  tableBody.innerHTML = "";
+  const keys = Object.keys(data);
+  keys.forEach((key, index) => {
+    const player = data[key];
+    const tr = document.createElement("tr");
 
     // No.
-    const tdNo = el('td','col-no');
+    const tdNo = document.createElement("td");
     tdNo.textContent = index + 1;
     tr.appendChild(tdNo);
 
-    // Player name
-    const tdName = el('td','col-name');
+    // Name
+    const tdName = document.createElement("td");
     if (editMode) {
-      const nameInput = el('input','name-input');
-      nameInput.type = 'text';
-      nameInput.value = player.name ?? '';
-      nameInput.style.color = player.color ?? 'var(--neon)';
-      nameInput.addEventListener('change', () => {
-        update(ref(db, `players/${id}`), { name: nameInput.value });
+      const nameInput = document.createElement("input");
+      nameInput.type = "text";
+      nameInput.value = player.name || "";
+      nameInput.addEventListener("change", () => {
+        update(ref(db, `players/${key}`), { name: nameInput.value });
       });
       tdName.appendChild(nameInput);
     } else {
-      const span = el('span');
-      span.textContent = player.name ?? '';
-      span.style.color = player.color ?? 'var(--neon)';
-      tdName.appendChild(span);
+      tdName.textContent = player.name || "";
     }
     tr.appendChild(tdName);
 
     // Stars
-    const tdStars = el('td','col-stars');
+    const tdStars = document.createElement("td");
     if (editMode) {
-      const starsInput = el('input','stars-input');
-      starsInput.type = 'number';
-      starsInput.min = 0;
-      starsInput.value = (player.stars ?? 0);
-      starsInput.addEventListener('change', () => {
-        const v = Math.max(0, parseInt(starsInput.value) || 0);
-        starsInput.value = v;
-        update(ref(db, `players/${id}`), { stars: v });
+      const starsInput = document.createElement("input");
+      starsInput.type = "number";
+      starsInput.value = player.stars || 0;
+      starsInput.addEventListener("change", () => {
+        update(ref(db, `players/${key}`), { stars: parseInt(starsInput.value) || 0 });
       });
       tdStars.appendChild(starsInput);
     } else {
-      tdStars.textContent = (player.stars ?? 0);
+      tdStars.textContent = player.stars || 0;
     }
     tr.appendChild(tdStars);
 
-    // Actions
-    const tdActions = el('td','col-actions');
-
-    if (editMode){
-      const plusBtn = el('button','small-btn btn-plus');
-      plusBtn.title = "Add 1 star";
-      plusBtn.innerHTML = "➕";
-      plusBtn.addEventListener('click', async () => {
-        // safe update using current cached value
-        const cur = (dataCache[id]?.stars ?? 0);
-        update(ref(db, `players/${id}`), { stars: cur + 1 });
-      });
-      tdActions.appendChild(plusBtn);
-
-      const minusBtn = el('button','small-btn btn-minus');
-      minusBtn.title = "Remove 1 star";
-      minusBtn.innerHTML = "➖";
-      minusBtn.addEventListener('click', () => {
-        const cur = (dataCache[id]?.stars ?? 0);
-        update(ref(db, `players/${id}`), { stars: Math.max(0, cur - 1) });
-      });
-      tdActions.appendChild(minusBtn);
-
-      const delBtn = el('button','small-btn btn-delete');
-      delBtn.title = "Delete player";
-      delBtn.innerHTML = "🗑️";
-      delBtn.addEventListener('click', () => {
-        if (confirm("Delete this player?")) remove(ref(db, `players/${id}`));
-      });
-      tdActions.appendChild(delBtn);
-
-      // Color change button + hidden color input
-      const colorInput = el('input');
-      colorInput.type = 'color';
-      colorInput.value = player.color ?? '#0fd7c7';
-      colorInput.style.display = 'none';
-      colorInput.addEventListener('input', () => {
-        update(ref(db, `players/${id}`), { color: colorInput.value });
-      });
-
-      const colorBtn = el('button','color-btn');
-      colorBtn.title = "Change color";
-      colorBtn.style.background = player.color ?? '#0fd7c7';
-      colorBtn.addEventListener('click', () => colorInput.click());
-      tdActions.appendChild(colorBtn);
-      tdActions.appendChild(colorInput);
-    } else {
-      // in view mode show small color box
-      const colorBox = el('div');
-      colorBox.style.display = 'inline-block';
-      colorBox.style.width = '28px';
-      colorBox.style.height = '18px';
-      colorBox.style.borderRadius = '6px';
-      colorBox.style.background = player.color ?? '#0fd7c7';
-      colorBox.style.marginLeft = '6px';
-      tdActions.appendChild(colorBox);
-    }
-    tr.appendChild(tdActions);
-
-    tbody.appendChild(tr);
-  });
-}
-
-// realtime listener
-const playersRef = ref(db, 'players');
-onValue(playersRef, (snap) => {
-  const val = snap.val() || {};
-  renderTable(val);
-});
-
-// SEARCH (single box for No. or Player name)
-searchEl.addEventListener('input', () => {
-  const q = (searchEl.value || '').toLowerCase().trim();
-  document.querySelectorAll('#tbody tr').forEach(row => {
-    // index cell always at position 1 (because when editMode checkbox present there is extra cell at 0)
-    const cells = row.querySelectorAll('td');
-    let serial = ''; let name = '';
+    // Actions (only edit mode)
     if (editMode) {
-      serial = (cells[1]?.textContent || '').toLowerCase();
-      // name cell content (input or span)
-      const nameInput = cells[2].querySelector('input') ?? cells[2].querySelector('span');
-      name = (nameInput?.textContent || nameInput?.value || '').toLowerCase();
-    } else {
-      serial = (cells[0]?.textContent || '').toLowerCase();
-      const nameElem = cells[1].querySelector('span') ?? cells[1];
-      name = (nameElem?.textContent || '').toLowerCase();
+      const tdAct = document.createElement("td");
+
+      const plusBtn = document.createElement("button");
+      plusBtn.className = "plus";
+      plusBtn.textContent = "+";
+      plusBtn.onclick = () => update(ref(db, `players/${key}`), { stars: (player.stars || 0) + 1 });
+
+      const minusBtn = document.createElement("button");
+      minusBtn.className = "minus";
+      minusBtn.textContent = "−";
+      minusBtn.onclick = () => update(ref(db, `players/${key}`), { stars: Math.max(0, (player.stars || 0) - 1) });
+
+      const delBtn = document.createElement("button");
+      delBtn.className = "delete";
+      delBtn.textContent = "🗑";
+      delBtn.onclick = () => { if (confirm("Delete player?")) remove(ref(db, `players/${key}`)); };
+
+      const colorBtn = document.createElement("button");
+      colorBtn.className = "colorbtn";
+      colorBtn.textContent = "🎨";
+      colorBtn.onclick = () => {
+        const newColor = prompt("Enter color hex (e.g. #ff0000):", player.color || "#ffffff");
+        if (newColor) update(ref(db, `players/${key}`), { color: newColor });
+      };
+
+      tdAct.appendChild(plusBtn);
+      tdAct.appendChild(minusBtn);
+      tdAct.appendChild(delBtn);
+      tdAct.appendChild(colorBtn);
+
+      tr.appendChild(tdAct);
     }
-    const ok = !q || serial.includes(q) || name.includes(q);
-    row.style.display = ok ? '' : 'none';
-  });
-});
 
-// ADD NEW PLAYER (edit mode only)
-if (editMode) {
-  addRowBtn.addEventListener('click', () => {
-    push(playersRef, { name: "New Player", stars: 0, color: "#0fd7c7" });
-    // new row appears automatically via onValue listener and will be editable
-    // keep focus behavior minimal — user can edit the row after it's created
+    tableBody.appendChild(tr);
   });
 }
 
-// GLOBAL OPERATIONS (edit mode)
-if (editMode) {
-  function getSelectedIds(){
-    const ids = [];
-    document.querySelectorAll('#tbody tr').forEach(row => {
-      const cb = row.querySelector('input[type="checkbox"]');
-      if (cb && cb.checked) ids.push(row.dataset.id);
-    });
-    return ids;
-  }
+// Add new player
+document.getElementById("add-row-btn").onclick = () => {
+  const newRef = push(ref(db, "players"));
+  set(newRef, { name: "New Player", stars: 0 });
+};
 
-  globalPlus.addEventListener('click', async () => {
-    const ids = getSelectedIds();
-    if (ids.length === 0){ alert("No rows selected"); return; }
-    // perform batched updates using current cache
-    ids.forEach(id => {
-      const cur = (dataCache[id]?.stars ?? 0);
-      update(ref(db, `players/${id}`), { stars: cur + 1 });
-    });
-  });
+// Search
+document.getElementById("search-no").addEventListener("input", search);
+document.getElementById("search-name").addEventListener("input", search);
 
-  globalMinus.addEventListener('click', async () => {
-    const ids = getSelectedIds();
-    if (ids.length === 0){ alert("No rows selected"); return; }
-    ids.forEach(id => {
-      const cur = (dataCache[id]?.stars ?? 0);
-      update(ref(db, `players/${id}`), { stars: Math.max(0, cur - 1) });
-    });
+function search() {
+  const noVal = document.getElementById("search-no").value.toLowerCase();
+  const nameVal = document.getElementById("search-name").value.toLowerCase();
+  Array.from(tableBody.rows).forEach(row => {
+    const no = row.cells[0].textContent.toLowerCase();
+    const name = row.cells[1].textContent.toLowerCase();
+    row.style.display = (no.includes(noVal) && name.includes(nameVal)) ? "" : "none";
   });
 }
-
-// keyboard: Enter in search won't submit form; add small UX
-searchEl.addEventListener('keydown', (e)=>{
-  if(e.key === 'Enter') e.preventDefault();
-});
-
-// initial focus
-searchEl.focus();
-
 </script>
+
 </body>
 </html>
